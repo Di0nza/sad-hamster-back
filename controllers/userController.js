@@ -1,12 +1,11 @@
-const {User} = require("../models/user");
+const userService = require("../services/userService/mongo.userService");
 
 class UserController {
     async getUser(req, res, next) {
         try {
-            console.log(req.body);
-            let user = await User.findOne({chatId: req.params.userId});
-            if(!user){
-                return res.status(400).user({success: false, message: "User not found"});
+            const user = await userService.getUserByChatId(req.params.userId);
+            if (!user) {
+                return res.status(400).json({success: false, message: "User not found"});
             }
             return res.json({user});
         } catch (error) {

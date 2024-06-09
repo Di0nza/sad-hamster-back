@@ -1,63 +1,23 @@
-const {User} = require("../models/user");
+const referralService = require("../services/referralsService/mongo.referralsService");
 
 class ReferralsController {
     async collectFromInvitees(req, res, next) {
         try {
-            const user = await User.findOne({ chatId: req.params.userId });
-            if (!user) return res.status(400).send({ message: "Invalid queryId" });
-            const referralUsers = user.referralUsers;
-            if (!referralUsers || referralUsers.length === 0) {
-                return res.status(400).send({ message: "No invitees yet" });
-            }
-            let totalScore = 0;
-            referralUsers.forEach(referralUser => {
-                totalScore += referralUser.score;
-                referralUser.score = 0;
-            });
-            user.score += totalScore;
-            user.overallScore += totalScore;
-            user.referralStartTime = Date.now();
-            user.referralCollectionTime = Date.now() + (2 * 60 * 1000);
-
-            await user.save();
-
+            const user = await referralService.collectFromInvitees(req.params.userId);
             return res.json({ user });
         } catch (error) {
             console.error(error);
-            res.status(500).send({ message: "Internal Server Error" });
+            return res.status(500).json({ message: error.message });
         }
     }
 
-    async replenishmentFromInvitees(req, res, next){
+    async replenishmentFromInvitees(req, res, next) {
         try {
-            const user = await User.findOne({ chatId: req.params.userId});
-            if (!user) return res.status(400).send({ message: "Invalid queryId" });
-
-            const referralUsers = user.referralUsers;
-            if (!referralUsers || referralUsers.length === 0) {
-                return res.status(400).send({ message: "No invitees yet" });
-            }
-
-            for (const referralUser of referralUsers) {
-                const referredUser = await User.findOne({ chatId: referralUser.chatId });
-                if (referredUser) {
-                    if (user.referralUsers && user.referralUsers.length > 0) {
-                        const referredUserIndex = user.referralUsers.findIndex(user => user.chatId === referredUser.chatId);
-                        if (referredUserIndex !== -1) {
-                            user.referralUsers[referredUserIndex].score += Math.round((referredUser.score - user.referralUsers[referredUserIndex].lastRefScore) * 0.08);
-                            user.referralUsers[referredUserIndex].lastRefScore = referredUser.score;
-                        }
-                    }
-                    referredUser.score = Math.round(referredUser.score);
-                    await referredUser.save();
-                }
-            }
-            await user.save();
-
+            const user = await referralService.replenishmentFromInvitees(req.params.userId);
             return res.json({ user });
         } catch (error) {
             console.error(error);
-            res.status(500).send({ message: "Internal Server Error" });
+            return res.status(500).json({ message: error.message });
         }
     }
 }

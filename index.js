@@ -8,7 +8,7 @@ require('dotenv').config();
 const app = express();
 const bot = new TelegramBot(process.env.BOT_TOKEN, {polling: true});
 
-const connection = require("./db");
+const connection = require("./lib/mongoose.mongo.db");
 
 connection();
 
