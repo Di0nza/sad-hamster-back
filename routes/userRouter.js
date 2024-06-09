@@ -3,5 +3,6 @@ const router = new Router();
 const userController = require("../controllers/userController");
 
 router.get('/:userId', userController.getUser);
+router.post('/miniGame/:userId', userController.miniGame);
 
 module.exports = router
