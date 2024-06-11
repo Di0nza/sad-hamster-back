@@ -3,7 +3,7 @@ const energyService = require("../services/energyService/mongo.energyService");
 class EnergyController {
     async update(req, res, next) {
         try {
-            const { userId } = req.params;
+            const { userId } = req.body.userId;
             const { energyRestoreTime, value } = req.body;
             const updatedUser = await energyService.updateEnergy(userId, energyRestoreTime, value);
             return res.status(201).json({ success: true, message: "Дата восстановления энергии обновлена успешно", user: updatedUser });

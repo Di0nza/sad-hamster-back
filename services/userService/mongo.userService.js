@@ -28,6 +28,16 @@ class UserService {
 
         return user;
     }
+
+    async updateScore(body) {
+        const chatId = body.userId;
+        let user = await User.findOne({chatId: chatId});
+        user.score = body.score;
+        user.overallScore = body.overallScore;
+        const savedUser = await user.save();
+        console.log(savedUser);
+        return user;
+    }
 }
 
 module.exports = new UserService();

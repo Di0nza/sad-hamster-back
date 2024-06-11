@@ -50,6 +50,17 @@ class UserController {
         }
     }
 
+    async updateScore(req, res, next) {
+        try {
+            await userService.updateScore(req.body);
+            return res.status(201).send({message: "Счет обновлен успешно"});
+        } catch (error) {
+            console.log(error);
+            res.status(500).send({message: "Внутренняя ошибка сервера"});
+        }
+    }
+
+
 }
 
 module.exports = new UserController();
