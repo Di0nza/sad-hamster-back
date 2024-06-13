@@ -1,11 +1,15 @@
 const {User} = require("../../models/user");
+const {Score} = require("../../models/scores");
+const {ReferralUsers} = require("../../models/referralUsers");
 
 class ReferralService {
     async collectFromInvitees(userId) {
-        const user = await User.findOne({chatId: userId});
-        if (!user) throw new Error("Invalid queryId");
+        const userReferrals = await ReferralUsers.findOne({parentChatId: userId});
+        let userScores = await Score.findOne({parentChatId: userId});
+        console.log(userReferrals)
+        if (!userReferrals) throw new Error("Invalid queryId");
 
-        const referralUsers = user.referralUsers;
+        const referralUsers = userReferrals.users;
         if (!referralUsers || referralUsers.length === 0) {
             throw new Error("No invitees yet");
         }
@@ -16,40 +20,48 @@ class ReferralService {
             referralUser.score = 0;
         });
 
-        user.score += totalScore;
-        user.overallScore += totalScore;
-        user.referralStartTime = Date.now();
-        user.referralCollectionTime = Date.now() + (2 * 60 * 1000);
+        userScores.score += totalScore;
+        userScores.overallScore += totalScore;
+        userReferrals.referralStartTime = Date.now();
+        userReferrals.referralCollectionTime = Date.now() + (2 * 60 * 1000);
 
-        await user.save();
+        await userReferrals.save();
+        await userScores.save();
 
-        return user;
+        const res = {
+            userReferrals: userReferrals,
+            score: userScores.score,
+            overallScore: userScores.overallScore
+        }
+
+        return res;
     }
 
     async replenishmentFromInvitees(userId) {
-        const user = await User.findOne({chatId: userId});
-        if (!user) throw new Error("Invalid queryId");
+        const userReferrals = await ReferralUsers.findOne({parentChatId: userId});
 
-        const referralUsers = user.referralUsers;
-        if (!referralUsers || referralUsers.length === 0) {
+        if (!userReferrals) throw new Error("Invalid queryId");
+
+        const referralUsers = userReferrals.users;
+        if (!referralUsers|| referralUsers.length === 0) {
             throw new Error("No invitees yet");
         }
 
         for (const referralUser of referralUsers) {
-            const referredUser = await User.findOne({chatId: referralUser.chatId});
-            if (referredUser) {
-                const referredUserIndex = user.referralUsers.findIndex(user => user.chatId === referredUser.chatId);
+            let referredUserScores = await Score.findOne({parentChatId: referralUser.chatId});
+            if (referredUserScores) {
+                const referredUserIndex = userReferrals.referralUsers.findIndex(user => user.chatId === referredUserScores.parentChatId);
                 if (referredUserIndex !== -1) {
-                    user.referralUsers[referredUserIndex].score += Math.round((referredUser.score - user.referralUsers[referredUserIndex].lastRefScore) * 0.08);
-                    user.referralUsers[referredUserIndex].lastRefScore = referredUser.score;
+                    userReferrals.referralUsers[referredUserIndex].score += Math.round((referredUserScores.score - userReferrals.referralUsers[referredUserIndex].lastRefScore) * 0.08);
+                    userReferrals.referralUsers[referredUserIndex].lastRefScore = referredUserScores.score;
                 }
-                referredUser.score = Math.round(referredUser.score);
-                await referredUser.save();
+                referredUserScores.score = Math.round(referredUserScores.score);
+                await referredUserScores.save();
             }
         }
-        await user.save();
+        await userReferrals.save();
 
-        return user;
+        return userReferrals;
     }
 }
 

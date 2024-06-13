@@ -1,29 +1,34 @@
 const {User} = require("../../models/user");
+const {Energy} = require("../../models/energy");
 const balance = require("../../data/balanceData.json");
+const {Score} = require("../../models/scores");
 
 class EnergyService {
     async updateEnergy(userId, energyRestoreTime, value) {
-        const user = await User.findOne({chatId: userId});
-        if (!user) {
+        console.log(userId, energyRestoreTime, value)
+        const usersEnergy = await Energy.findOne({parentChatId: userId});
+        if (!usersEnergy) {
             throw new Error("User not found");
         }
 
         // Обновляем данные по энергии пользователя
-        user.energy.energyFullRecoveryDate = energyRestoreTime;
-        user.energy.value = value;
+        usersEnergy.energy.energyFullRecoveryDate = energyRestoreTime;
+        usersEnergy.energy.value = value;
 
-        await user.save();
+        await usersEnergy.save();
 
-        return user;
+        return usersEnergy;
     }
 
     async updateCapacity(userId) {
-        const user = await User.findOne({chatId: userId});
-        if (!user) {
+        const userEnergyDB = await Energy.findOne({parentChatId: userId});
+        const userScores = await Score.findOne({parentChatId: userId});
+
+        if (!userEnergyDB) {
             throw new Error("User not found");
         }
 
-        const userEnergy = user.energy;
+        const userEnergy = userEnergyDB.energy;
         const energyCapacityData = balance.energy.energyCapacity;
         const energyRecoveryData = balance.energy.energyRecovery;
         let currentCapacityLevel = userEnergy.energyCapacityLevel;
@@ -31,7 +36,7 @@ class EnergyService {
 
         userEnergy.lastEntrance = new Date();
         const price = energyCapacityData.price[currentCapacityLevel - 1];
-        if (user.score < price) {
+        if (userScores.score < price) {
             throw new Error("Not enough money");
         }
 
@@ -51,10 +56,10 @@ class EnergyService {
         }
         userEnergy.value = energyValue;
 
-        if (currentCapacityLevel < 6) {
+        if (currentCapacityLevel < 5) {
             userEnergy.energyCapacityLevel++;
             currentCapacityLevel++;
-            user.score -= price;
+            userScores.score -= price;
         } else {
             throw new Error("Maximum level reached");
         }
@@ -69,19 +74,26 @@ class EnergyService {
 
         userEnergy.energyFullRecoveryDate = energyRestoreTime;
 
-        user.energy = userEnergy;
+        userEnergyDB.energy = userEnergy;
 
-        await user.save();
-        return user;
+        await userEnergyDB.save();
+        await userScores.save();
+        const res = {
+            score: userScores.score,
+            energy: userEnergy
+        }
+        return res;
     }
 
     async updateRecovery(userId) {
-        const user = await User.findOne({chatId: userId});
-        if (!user) {
+        const userEnergyDB = await Energy.findOne({parentChatId: userId});
+        const userScores = await Score.findOne({parentChatId: userId});
+
+        if (!userEnergyDB) {
             throw new Error("User not found");
         }
 
-        const userEnergy = user.energy;
+        const userEnergy = userEnergyDB.energy;
         const energyCapacityData = balance.energy.energyCapacity;
         const energyRecoveryData = balance.energy.energyRecovery;
         let currentCapacityLevel = userEnergy.energyCapacityLevel;
@@ -89,7 +101,7 @@ class EnergyService {
 
         userEnergy.lastEntrance = new Date();
         const price = energyRecoveryData.price[currentRecoveryLevel - 1];
-        if (user.score < price) {
+        if (userScores.score < price) {
             throw new Error("Not enough money");
         }
 
@@ -109,10 +121,10 @@ class EnergyService {
         }
         userEnergy.value = energyValue;
 
-        if (currentRecoveryLevel < 6) {
+        if (currentRecoveryLevel < 5) {
             userEnergy.energyRecoveryLevel++;
             currentRecoveryLevel++;
-            user.score -= price;
+            userScores.score -= price;
         } else {
             throw new Error("Maximum level reached");
         }
@@ -128,10 +140,15 @@ class EnergyService {
 
         userEnergy.energyFullRecoveryDate = energyRestoreTime;
 
-        user.energy = userEnergy;
+        userEnergyDB.energy = userEnergy;
 
-        await user.save();
-        return user;
+        await userEnergyDB.save();
+        await userScores.save();
+        const res = {
+            score: userScores.score,
+            energy: userEnergy
+        }
+        return res;
     }
 }
 

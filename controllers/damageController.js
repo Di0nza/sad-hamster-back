@@ -6,6 +6,7 @@ class DamageController {
         try {
             const userId = req.params.userId;
             const updatedUser = await damageService.updateDamage(userId);
+            console.log(updatedUser)
             return res.json({ success: true, user: updatedUser });
         } catch (error) {
             console.error(error);

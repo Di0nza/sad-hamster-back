@@ -5,15 +5,26 @@ class UserService {
         return await User.findOne({ chatId });
     }
 
-    async miniGame(chatId, reward) {
-        const user = await User.findOne({ chatId });
-        user.score += parseInt(reward.toString());
-        await user.save();
-        return user;
+    async getFullUserDataByChatId(chatId) {
+        return await User.findOne({ chatId })
+            .populate('referralUsers')
+            .populate('energy')
+            .populate('scores')
+            .exec();
     }
 
-    async getAllUsers() {
-        return await User.find().sort({ overallScore: -1 });
+
+    async getAllUsers(chatId) {
+        const allUsers = await User.find()
+            .populate('scores')
+            .sort({ 'scores.overallScore': -1 }) // Сортировка по вложенному полю
+            .exec();
+        const userTopPlace = allUsers.findIndex(user => user.chatId === chatId) + 1;
+        const res = {
+            allUsers,
+            userTopPlace
+        }
+        return res;
     }
 
     async getUserTopPlace(chatId) {
@@ -29,15 +40,7 @@ class UserService {
         return user;
     }
 
-    async updateScore(body) {
-        const chatId = body.userId;
-        let user = await User.findOne({chatId: chatId});
-        user.score = body.score;
-        user.overallScore = body.overallScore;
-        const savedUser = await user.save();
-        console.log(savedUser);
-        return user;
-    }
+
 }
 
 module.exports = new UserService();

@@ -24,7 +24,7 @@ class TaskController {
     async completeTask(req, res, next) {
         try {
             const user = await taskService.completeTask(req.params.userId, req.body.taskId);
-            return res.json({message: `Task completed successfully`, user});
+            return res.json({message: `Task completed successfully`, ...user});
         } catch (error) {
             console.log(error);
             res.status(500).send({message: "Внутренняя ошибка сервера"});

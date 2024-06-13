@@ -5,7 +5,7 @@ class UserController {
         try {
             const user = await userService.getUserByChatId(req.params.userId);
             if (!user) {
-                return res.status(400).json({success: false, message: "User not found"});
+                return res.status(400).json({success: false, message: "User not found фарол"});
             }
             return res.json({user});
         } catch (error) {
@@ -14,9 +14,9 @@ class UserController {
         }
     }
 
-    async miniGame(req, res, next) {
+    async getFullUserData(req, res, next){
         try {
-            const user = await userService.miniGame(req.params.userId, req.body.reward);
+            const user = await userService.getFullUserDataByChatId(req.params.userId);
             if (!user) {
                 return res.status(400).json({success: false, message: "User not found"});
             }
@@ -29,7 +29,7 @@ class UserController {
 
     async getAllUsers(req, res, next) {
         try {
-            const users = await userService.getAllUsers();
+            const users = await userService.getAllUsers(req.body.userId);
             return res.json({users});
         } catch (error) {
             console.log(error);
@@ -44,16 +44,6 @@ class UserController {
                 return res.status(400).json({success: false, message: "User not found"});
             }
             return res.json({user});
-        } catch (error) {
-            console.log(error);
-            res.status(500).send({message: "Внутренняя ошибка сервера"});
-        }
-    }
-
-    async updateScore(req, res, next) {
-        try {
-            await userService.updateScore(req.body);
-            return res.status(201).send({message: "Счет обновлен успешно"});
         } catch (error) {
             console.log(error);
             res.status(500).send({message: "Внутренняя ошибка сервера"});

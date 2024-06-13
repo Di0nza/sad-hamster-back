@@ -1,14 +1,18 @@
 const { User } = require("../../models/user");
 const { Task } = require("../../models/task");
+const {Score} = require("../../models/scores");
+const {UserCompletedTask} = require("../../models/userCompletedTask");
+
 
 class TaskService {
     async getTasks(chatId) {
-        const user = await User.findOne({ chatId });
-        console.log(user.completedTasks);
+        const userCompletedTasks = await UserCompletedTask.findOne({ parentChatId: chatId });
+        console.log(userCompletedTasks);
         const allTasks = await Task.find();
 
         const tasksWithStatus = allTasks.map(task => {
-            const done = user.completedTasks.some(completedTask => completedTask._id.equals(task._id));
+            const done = userCompletedTasks.completedTasks.some(completedTask => completedTask.toString() === task._id.toString())
+
             return { ...task.toObject(), done };
         });
 
@@ -23,8 +27,9 @@ class TaskService {
     }
 
     async completeTask(chatId, taskId) {
-        const user = await User.findOne({ chatId });
-        if (!user) {
+        const userCompletedTasks = await UserCompletedTask.findOne({ parentChatId: chatId });
+        const scores = await Score.findOne({ parentChatId: chatId });
+        if (!scores) {
             throw new Error("User not found");
         }
         const task = await Task.findById(taskId);
@@ -32,15 +37,23 @@ class TaskService {
             throw new Error("Task not found");
         }
 
-        if (user.completedTasks.includes(taskId)) {
+        if (userCompletedTasks.completedTasks.includes(taskId)) {
             throw new Error("Task already completed");
         }
 
-        user.score += task.reward
-        user.completedTasks.push(taskId);
+        scores.score += task.reward;
+        scores.overallScore += task.reward;
+        userCompletedTasks.completedTasks.push(taskId);
 
-        await user.save();
-        return user;
+        await userCompletedTasks.save();
+        await scores.save();
+
+        const res = {
+            score: scores.score,
+            overallScore: scores.overallScore,
+            completedTaskId: taskId
+        }
+        return res;
     }
 
 }
