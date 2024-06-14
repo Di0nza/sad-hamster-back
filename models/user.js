@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
     username: { type: String, required: false },
-    chatId: { type: String, required: false },
+    chatId: { type: String, required: false, index: true },
     childReferral: { type: String, required: false },
     userTopPlace: { type: Number, required: false, default: 0 },
     firstEntry: { type: Boolean, default: false },

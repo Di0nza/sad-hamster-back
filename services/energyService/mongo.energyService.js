@@ -5,18 +5,21 @@ const {Score} = require("../../models/scores");
 
 class EnergyService {
     async updateEnergy(userId, energyRestoreTime, value) {
-        console.log(userId, energyRestoreTime, value)
-        const usersEnergy = await Energy.findOne({parentChatId: userId});
+        console.log(userId, energyRestoreTime, value);
+        let usersEnergy = await Energy.findOneAndUpdate(
+            { parentChatId: userId },
+            {
+                $set: {
+                    'energy.energyFullRecoveryDate': energyRestoreTime,
+                    'energy.value': value
+                }
+            },
+            { new: true }
+        );
+
         if (!usersEnergy) {
             throw new Error("User not found");
         }
-
-        // Обновляем данные по энергии пользователя
-        usersEnergy.energy.energyFullRecoveryDate = energyRestoreTime;
-        usersEnergy.energy.value = value;
-
-        await usersEnergy.save();
-
         return usersEnergy;
     }
 

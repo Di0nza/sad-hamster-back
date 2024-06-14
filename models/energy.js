@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const energySchema = new mongoose.Schema({
-    parentChatId: { type: String, required: false },
+    parentChatId: { type: String, required: false, index: true},
     energy: {
         energyFullRecoveryDate: { type: Date, default: new Date() },
         value: { type: Number, default: 500 },

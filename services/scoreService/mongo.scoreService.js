@@ -1,23 +1,50 @@
-const {Score} = require("../../models/scores");
+const { Score } = require("../../models/scores");
 
-class ScoreService{
+class ScoreService {
     async updateScore(body) {
-        const chatId = body.userId;
-        let userScores = await Score.findOne({parentChatId: chatId});
-        userScores.score = body.score;
-        userScores.overallScore = body.overallScore;
-        const savedUser = await userScores.save();
-        console.log(savedUser);
-        return userScores;
+        const { userId, score, overallScore } = body;
+
+        try {
+            const updatedUserScores = await Score.findOneAndUpdate(
+                { parentChatId: userId },
+                { score, overallScore },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedUserScores) {
+                throw new Error("User scores not found");
+            }
+
+            console.log("Updated user scores:", updatedUserScores);
+            return updatedUserScores;
+        } catch (error) {
+            throw error;
+        }
     }
 
-
     async miniGame(chatId, reward) {
-        const userScores = await Score.findOne({parentChatId: chatId });
-        userScores.score += parseInt(reward.toString());
-        userScores.overallScore += parseInt(reward.toString());
-        await userScores.save();
-        return userScores;
+        try {
+            const rewardInt = parseInt(reward.toString());
+
+            const updatedUserScores = await Score.findOneAndUpdate(
+                { parentChatId: chatId },
+                {
+                    $inc: {
+                        score: rewardInt,
+                        overallScore: rewardInt
+                    }
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedUserScores) {
+                throw new Error("User scores not found");
+            }
+
+            return updatedUserScores;
+        } catch (error) {
+            throw error;
+        }
     }
 }
 

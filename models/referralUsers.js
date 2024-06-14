@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const referralUsersSchema = new mongoose.Schema({
-    parentChatId: { type: String, required: false },
+    parentChatId: { type: String, required: false, index: true },
     referralStartTime: { type: Date, required: false },
     referralCollectionTime: { type: Date, required: false },
     users: [{

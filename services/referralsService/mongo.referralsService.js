@@ -1,13 +1,13 @@
-const {User} = require("../../models/user");
-const {Score} = require("../../models/scores");
-const {ReferralUsers} = require("../../models/referralUsers");
+const { User } = require("../../models/user");
+const { Score } = require("../../models/scores");
+const { ReferralUsers } = require("../../models/referralUsers");
 
 class ReferralService {
     async collectFromInvitees(userId) {
-        const userReferrals = await ReferralUsers.findOne({parentChatId: userId});
-        let userScores = await Score.findOne({parentChatId: userId});
-        console.log(userReferrals)
-        if (!userReferrals) throw new Error("Invalid queryId");
+        const userReferrals = await ReferralUsers.findOne({ parentChatId: userId });
+        if (!userReferrals) {
+            throw new Error("Invalid queryId");
+        }
 
         const referralUsers = userReferrals.users;
         if (!referralUsers || referralUsers.length === 0) {
@@ -20,45 +20,58 @@ class ReferralService {
             referralUser.score = 0;
         });
 
+        const userScores = await Score.findOne({ parentChatId: userId });
+        if (!userScores) {
+            throw new Error("User scores not found");
+        }
+
         userScores.score += totalScore;
         userScores.overallScore += totalScore;
         userReferrals.referralStartTime = Date.now();
         userReferrals.referralCollectionTime = Date.now() + (2 * 60 * 1000);
 
-        await userReferrals.save();
-        await userScores.save();
+        await Promise.all([
+            userReferrals.save(),
+            userScores.save()
+        ]);
 
-        const res = {
-            userReferrals: userReferrals,
+        return {
+            userReferrals,
             score: userScores.score,
             overallScore: userScores.overallScore
-        }
-
-        return res;
+        };
     }
 
     async replenishmentFromInvitees(userId) {
-        const userReferrals = await ReferralUsers.findOne({parentChatId: userId});
-
-        if (!userReferrals) throw new Error("Invalid queryId");
-
-        const referralUsers = userReferrals.users;
-        if (!referralUsers|| referralUsers.length === 0) {
-            throw new Error("No invitees yet");
+        const userReferrals = await ReferralUsers.findOne({ parentChatId: userId });
+        if (!userReferrals) {
+            throw new Error("Invalid queryId");
         }
 
-        for (const referralUser of referralUsers) {
-            let referredUserScores = await Score.findOne({parentChatId: referralUser.chatId});
+        const referralUsers = userReferrals.users;
+        if (!referralUsers || referralUsers.length === 0) {
+            throw new Error("No invitees yet");
+        }
+        console.log(referralUsers)
+        // Создаем массив промисов для всех асинхронных операций
+        const updatePromises = referralUsers.map(async referralUser => {
+            const referredUserScores = await Score.findOne({ parentChatId: referralUser.chatId });
             if (referredUserScores) {
-                const referredUserIndex = userReferrals.referralUsers.findIndex(user => user.chatId === referredUserScores.parentChatId);
+                const referredUserIndex = referralUsers.findIndex(user => user.chatId === referredUserScores.parentChatId);
                 if (referredUserIndex !== -1) {
-                    userReferrals.referralUsers[referredUserIndex].score += Math.round((referredUserScores.score - userReferrals.referralUsers[referredUserIndex].lastRefScore) * 0.08);
-                    userReferrals.referralUsers[referredUserIndex].lastRefScore = referredUserScores.score;
+                    referralUsers[referredUserIndex].score += Math.round((referredUserScores.score - referralUsers[referredUserIndex].lastRefScore) * 0.08);
+                    referralUsers[referredUserIndex].lastRefScore = referredUserScores.score;
                 }
                 referredUserScores.score = Math.round(referredUserScores.score);
                 await referredUserScores.save();
             }
-        }
+        });
+
+        userReferrals.users = referralUsers;
+
+        await Promise.all(updatePromises);
+
+        // Сохраняем обновленные данные userReferrals в базе данных
         await userReferrals.save();
 
         return userReferrals;
