@@ -50,7 +50,7 @@ class ReferralService {
 
         const referralUsers = userReferrals.users;
         if (!referralUsers || referralUsers.length === 0) {
-            throw new Error("No invitees yet");
+            return {message: "No invitees yet"}
         }
         console.log(referralUsers)
         // Создаем массив промисов для всех асинхронных операций

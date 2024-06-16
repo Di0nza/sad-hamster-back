@@ -1,71 +1,71 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id           Int             @id @default(autoincrement())
-  chatId       String          @unique
-  username     String?
-  firstName    String
-  lastName     String
-  userTopPlace String?
-  firstEntry   DateTime?
-  damageLevel  Int
-  score        Int
-  overallScore Int
-  referrals    UserReferrals[] @relation("UserReferrals")
-  invitedBy    UserReferrals?  @relation("UserReferralsInvitedBy")
-  tasks        UsersTasks[]
-  energy       UsersEnergy?    @relation("UsersEnergy")
-}
-
-model UserReferrals {
-  id             Int      @id @default(autoincrement())
-  parentChatId   String
-  childChatId    String   @unique
-  score          Int
-  collectionTime DateTime
-  lastRefScore   Int
-  parent         User     @relation("UserReferrals", fields: [parentChatId], references: [chatId])
-  child          User     @relation("UserReferralsInvitedBy", fields: [childChatId], references: [chatId])
-
-  @@unique([parentChatId, childChatId])
-}
-
-model Task {
-  id          Int          @id @default(autoincrement())
-  title       String
-  description String
-  reward      Int
-  link        String?
-  users       UsersTasks[]
-}
-
-model UsersTasks {
-  id         Int    @id @default(autoincrement())
-  userChatId String
-  taskId     Int
-  user       User   @relation(fields: [userChatId], references: [chatId], onDelete: Cascade)
-  task       Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-}
-
-model UsersEnergy {
-  id                     Int      @id @default(autoincrement())
-  userChatId             String   @unique
-  levelOfCapacity        Int
-  levelOfCharging        Int
-  value                  Int
-  energyFullRecoveryDate DateTime
-  user                   User     @relation("UsersEnergy", fields: [userChatId], references: [chatId], onDelete: Cascade)
-}
+// // This is your Prisma schema file,
+// // learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+//
+// generator client {
+//   provider = "prisma-client-js"
+// }
+//
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+//
+// model User {
+//   id           Int             @id @default(autoincrement())
+//   chatId       String          @unique
+//   username     String?
+//   firstName    String
+//   lastName     String
+//   userTopPlace String?
+//   firstEntry   DateTime?
+//   damageLevel  Int
+//   score        Int
+//   overallScore Int
+//   referrals    UserReferrals[] @relation("UserReferrals")
+//   invitedBy    UserReferrals?  @relation("UserReferralsInvitedBy")
+//   tasks        UsersTasks[]
+//   energy       UsersEnergy?    @relation("UsersEnergy")
+// }
+//
+// model UserReferrals {
+//   id             Int      @id @default(autoincrement())
+//   parentChatId   String
+//   childChatId    String   @unique
+//   score          Int
+//   collectionTime DateTime
+//   lastRefScore   Int
+//   parent         User     @relation("UserReferrals", fields: [parentChatId], references: [chatId])
+//   child          User     @relation("UserReferralsInvitedBy", fields: [childChatId], references: [chatId])
+//
+//   @@unique([parentChatId, childChatId])
+// }
+//
+// model Task {
+//   id          Int          @id @default(autoincrement())
+//   title       String
+//   description String
+//   reward      Int
+//   link        String?
+//   users       UsersTasks[]
+// }
+//
+// model UsersTasks {
+//   id         Int    @id @default(autoincrement())
+//   userChatId String
+//   taskId     Int
+//   user       User   @relation(fields: [userChatId], references: [chatId], onDelete: Cascade)
+//   task       Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+// }
+//
+// model UsersEnergy {
+//   id                     Int      @id @default(autoincrement())
+//   userChatId             String   @unique
+//   levelOfCapacity        Int
+//   levelOfCharging        Int
+//   value                  Int
+//   energyFullRecoveryDate DateTime
+//   user                   User     @relation("UsersEnergy", fields: [userChatId], references: [chatId], onDelete: Cascade)
+// }

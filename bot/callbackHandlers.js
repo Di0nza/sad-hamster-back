@@ -1,4 +1,3 @@
-const {prismaDB} = require('../lib/prisma.postgreSQL.db');
 const {User} = require("../models/user");
 const {Energy} = require("../models/energy");
 const {ReferralUsers} = require("../models/referralUsers");
@@ -106,7 +105,7 @@ async function handleCallbacks(bot) {
             await bot.sendMessage(chatId, 'Launch app', {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: 'Play', web_app: { url: `https://dragoneggs.net.pl/loadingScreen` } }]
+                        [{ text: 'Play', web_app: { url: `https://sad-hamster.com.pl/loadingScreen` } }]
                     ]
                 }
             });

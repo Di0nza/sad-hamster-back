@@ -14,6 +14,9 @@ class ReferralsController {
     async replenishmentFromInvitees(req, res, next) {
         try {
             const referralUsers = await referralService.replenishmentFromInvitees(req.params.userId);
+            if(referralUsers.message){
+                return res.json({message: referralUsers.message});
+            }
             return res.json({ referralUsers });
         } catch (error) {
             console.error(error);
